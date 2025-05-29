@@ -11,19 +11,6 @@ services:
     networks:
       - appnet
 
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile.client
-    container_name: tcp_client
-    depends_on:
-      - voice_service
-    environment:
-      - SERVER_HOST=voice_service
-      - SERVER_PORT=8888
-    networks:
-      - appnet
-
 networks:
   appnet:
     driver: bridge 

@@ -112,7 +112,7 @@ class TCPClient:
 
 if __name__ == "__main__":
     # Configure logging to file
-    log_file = "logs/tcp_client.log"
+    log_file = "client/logs/tcp_client.log"
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
