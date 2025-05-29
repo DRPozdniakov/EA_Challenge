@@ -8,6 +8,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 from instances.class_agents import MultiModelAgent, ProcessType
+from interfaces.tcp_server import TCPServer    
 
 # Configure logging
 logging.basicConfig(
@@ -29,28 +30,29 @@ class TTSAgent:
         self.logger.debug("Pygame mixer initialized")
 
     async def transform_text_to_speech(self, text: str, voice:str="nova"):
-        response = await self.agent_tts_converter.client_model.audio.speech.create(
+        response = self.agent_tts_converter.client_model.audio.speech.create(
             model=self.model_tts_converter,
             voice=voice,
             input=text
         )
-        return response
+        # Get the raw audio data
+        audio_data = response.content
+        return audio_data
 
-    def play_audio(self, audio_data):
+    @staticmethod
+    def play_audio(audio_data):
         """
         Play audio data directly from memory using pygame
         
         Args:
             audio_data (bytes): The audio data to play
         """
-        self.logger.debug(f"Attempting to play audio data of size: {len(audio_data)} bytes")
+        print(f"Attempting to play audio data of size: {len(audio_data)} bytes")
         try:
             # Create a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
                 temp_file.write(audio_data)
                 temp_file_path = temp_file.name
-            
-            self.logger.debug(f"Created temporary file: {temp_file_path}")
             
             # Load and play the audio using pygame
             pygame.mixer.music.load(temp_file_path)
@@ -60,14 +62,13 @@ class TTSAgent:
             while pygame.mixer.music.get_busy():
                 pygame.time.Clock().tick(10)
             
-            self.logger.info("Audio playback completed successfully")
+            print("Audio playback completed successfully")
             
             # Clean up the temporary file
             os.unlink(temp_file_path)
-            self.logger.debug("Temporary file cleaned up")
             
         except Exception as e:
-            self.logger.error(f"Error playing audio: {str(e)}")
+            print(f"Error playing audio: {str(e)}")
         finally:
             # Stop any playing audio
             pygame.mixer.music.stop()
@@ -122,6 +123,8 @@ class VoiceAnswer:
 
         self.tts_agent=TTSAgent(logger=self.logger)
 
+        self.tcp_server = TCPServer(host='localhost', port=8888, logger=self.logger)
+
     def get_answer(self):
         return self.answer
 
@@ -129,18 +132,45 @@ class VoiceAnswer:
         self.answer = answer
 
     async def get_voice_answer(self):
-        # 1. Get the question from the user b source of the choice
-        question = "How much is the fish?"
+        self.logger.info("Starting voice answer service...")
+        # Start server in a separate task
+        server_task = asyncio.create_task(self.tcp_server.start())
+        self.running = True
+        self.logger.info("Server started, waiting for messages...")
 
-        # 2. Send the question OpenAI Model. The choice is to keep conversation context for this models instance
-        answer = await self.agent_assistant.assist_user(question=question)
-        self.logger.info(f"{self.model_assistant} answer is: {answer}")
+        while self.running:
+            if self.tcp_server.received_message:
+                # 1. Get the question from the user b source of the choice
+                # question = "How much is the fish?"
+                self.logger.info(f"Starting to process message: {self.tcp_server.received_message} from {self.tcp_server.client_address}")
 
-        # 3. Send answer via TCP socket to the external service for evaluation
-        answer_tts = await self.tts_agent.transform_text_to_speech(answer[1]["content"])
-        self.tts_agent.play_audio(audio_data=answer_tts.content)
+                # 2. Send the question OpenAI Model. The choice is to keep conversation context for 
+                #   this models instance
+                answer = await self.agent_assistant.assist_user(question=self.tcp_server.received_message)
+                self.logger.info(f"{self.model_assistant} answer is: {answer}")
 
-        print(answer)
+                # 3. Send answer via TCP socket to the external service for evaluation
+                audio_data = await self.tts_agent.transform_text_to_speech(answer[1]["content"])
+                self.logger.info(f"Generated audio data: {len(audio_data)} bytes")
+                
+                # Play audio locally
+                # self.tts_agent.play_audio(audio_data=audio_data)
+
+                # 4. Return audio data to client
+                status = self.tcp_server.send_message(answer=audio_data, address=self.tcp_server.client_address)
+
+                if status:
+                    self.logger.info(f"Audio data sent to client {self.tcp_server.client_address} with status {status}")
+                else:
+                    self.logger.error(f"Failed to send audio data to client {self.tcp_server.client_address} with status {status}")
+
+                # Clear the received message after processing
+                self.tcp_server.received_message = None
+                self.logger.info("Message processing completed")
+            else:
+                self.logger.debug("No new messages, waiting...")
+
+            await asyncio.sleep(2)
 
 if __name__ == "__main__":
     # Configure logging
@@ -149,7 +179,6 @@ if __name__ == "__main__":
         format='%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-    logger = logging.getLogger(__name__)
     logger = logging.getLogger(__name__)
     voice_answer = VoiceAnswer(logger)
     asyncio.run(voice_answer.get_voice_answer())
