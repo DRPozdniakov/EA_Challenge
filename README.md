@@ -51,7 +51,7 @@ python tcp_client.py
 - The server keeps a memory log of all interactions and events in `app/logs/voice_service.log`.
 - This log is useful for debugging, auditing, and tracking the conversation history and server activity.
 
-## Test conersation 
+## Test conversation 
 - "Today date is 29.05.2025"
 - "Your name is Lora"
 - Can you present yourself and tell me what is the date today?
