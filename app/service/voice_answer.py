@@ -101,18 +101,3 @@ class VoiceAnswerService:
                 self.logger.debug("No new messages, waiting...")
 
             await asyncio.sleep(2)
-
-
-if __name__ == "__main__":
-    """
-    Entry point for running the VoiceAnswerService.
-    """
-    # Configure logging
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    logger = logging.getLogger(__name__)
-    voice_answer = VoiceAnswerService(logger)
-    asyncio.run(voice_answer.get_voice_answer())
