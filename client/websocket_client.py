@@ -1,22 +1,20 @@
 """
-TCP Audio Client
-----------------
-A Gradio-based client for sending questions to a TCP server and receiving audio responses.
+TCP Audio Client (WebSocket version)
+-----------------------------------
+A Gradio-based client for sending questions to a WebSocket server and receiving audio responses.
 """
-
-import asyncio
 import logging
 import tempfile
 import gradio as gr
+import websockets
 
-
-class TCPClient:
+class WebSocketClient:
     """
-    TCPClient handles sending questions to a TCP server and receiving audio responses.
+    WebSocketClient handles sending questions to a WebSocket server and receiving audio responses.
     """
     def __init__(self, host='localhost', port=8888, logger=None):
         """
-        Initialize the TCPClient.
+        Initialize the WebSocketClient.
 
         Args:
             host (str): Server host address.
@@ -29,55 +27,22 @@ class TCPClient:
 
     async def send_question(self, question):
         """
-        Send a question to the server and receive the audio response.
-
-        Args:
-            question (str): The question to send.
-
-        Returns:
-            str: Path to the received audio file, or None on error.
+        Send a question to the server and receive the audio response (as binary).
         """
+        uri = f"ws://{self.host}:{self.port}"
         try:
-            # Connect to server
-            reader, writer = await asyncio.open_connection(self.host, self.port)
-            self.logger.info(f"Connected to server at {self.host}:{self.port}")
-            
-            # Send question
-            writer.write(question.encode())
-            await writer.drain()
-            self.logger.info(f"Sent question: {question}")
-            
-            # Receive audio data with end marker
-            audio_data = bytearray()
-            end_marker = b"<END_OF_AUDIO>"
-            
-            while True:
-                chunk = await reader.read(1024*1024)  # Read in 1MB chunks
-                if not chunk:
-                    break
-                    
-                # Check if end marker is in this chunk
-                if end_marker in chunk:
-                    # Split at end marker and add only the audio data
-                    audio_data.extend(chunk.split(end_marker)[0])
-                    break
-                else:
-                    audio_data.extend(chunk)
-            
-            self.logger.info(f"Received complete audio data: {len(audio_data)} bytes")
-            
-            # Save audio to temporary file and return its path
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-                temp_file.write(audio_data)
-                return temp_file.name
-            
+            async with websockets.connect(uri, max_size=None) as websocket:
+                await websocket.send(question)
+                self.logger.info(f"Sent question: {question}")
+                audio_data = await websocket.recv()  # Should be bytes
+                self.logger.info(f"Received audio data: {len(audio_data)} bytes")
+                # Save audio to temporary file and return its path
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+                    temp_file.write(audio_data)
+                    return temp_file.name
         except Exception as e:
-            self.logger.error(f"Error in client: {str(e)}")
+            self.logger.error(f"WebSocket error: {str(e)}")
             return None
-        finally:
-            writer.close()
-            await writer.wait_closed()
-            self.logger.info("Connection closed")
 
     async def send_message(self, message, host, port):
         """
@@ -113,8 +78,8 @@ class TCPClient:
             gr.Blocks: The Gradio interface.
         """
         # Create Gradio interface
-        with gr.Blocks(title="TCP Audio Client") as interface:
-            gr.Markdown("# TCP Audio Client")
+        with gr.Blocks(title="WebSocket Audio Client") as interface:
+            gr.Markdown("# WebSocket Audio Client")
             
             with gr.Row():
                 with gr.Column(scale=1):
@@ -154,7 +119,7 @@ class TCPClient:
 
 def main():
     """
-    Entry point for running the TCP Audio Client UI.
+    Entry point for running the WebSocket Audio Client UI.
     """
     # Configure logging to file
     log_file = "client/logs/tcp_client.log"
@@ -168,10 +133,10 @@ def main():
         ]
     )
     logger = logging.getLogger(__name__)
-    logger.info("Starting TCP Client...")
+    logger.info("Starting WebSocket Client...")
     
     # Create client and launch UI
-    client = TCPClient(logger=logger)
+    client = WebSocketClient(logger=logger)
     interface = client.create_ui()
     interface.launch()
 

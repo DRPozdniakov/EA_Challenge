@@ -12,4 +12,4 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
     voice_answer = VoiceAnswerService(logger)
-    asyncio.run(voice_answer.get_voice_answer())
+    asyncio.run(voice_answer.run())

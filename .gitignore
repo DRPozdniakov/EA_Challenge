@@ -1,3 +1,5 @@
 .env
 app/logs/*
+app/_pycache_/*
 client/logs/*
+app/service/__pycache__/*

@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY . /app
 WORKDIR /app
 ENV PYTHONPATH=/app
-CMD ["python", "app/service/voice_answer.py"]
+CMD ["python", "app/main.py"]
