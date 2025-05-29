@@ -1,3 +1,9 @@
+"""
+playaudio.py
+------------
+Utility for playing audio data using pygame.
+"""
+
 import pygame
 import tempfile
 import os
@@ -15,7 +21,7 @@ def play_audio(audio_data):
     pygame.mixer.init()
     print("Pygame mixer initialized")
     try:
-        # Create a temporary file
+        # Create a temporary file for the audio
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
             temp_file.write(audio_data)
             temp_file_path = temp_file.name

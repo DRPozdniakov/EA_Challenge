@@ -1,9 +1,27 @@
+"""
+tcp_server.py
+-------------
+TCP server for handling client connections and sending/receiving messages.
+"""
+
 import asyncio
 import logging
-import json 
+import json
+
 
 class TCPServer:
+    """
+    TCPServer handles incoming TCP connections, receives messages, and sends responses.
+    """
     def __init__(self, host='localhost', port=8888, logger=None):
+        """
+        Initialize the TCPServer.
+
+        Args:
+            host (str): Host address to bind the server.
+            port (int): Port to listen on.
+            logger (logging.Logger): Logger instance.
+        """
         self.host = host
         self.port = port
         self.logger = logger
@@ -14,7 +32,13 @@ class TCPServer:
         self.client_writer = None
         
     async def handle_client(self, reader, writer):
-        """Handle individual client connections"""
+        """
+        Handle individual client connections.
+
+        Args:
+            reader (StreamReader): Stream reader for the client.
+            writer (StreamWriter): Stream writer for the client.
+        """
         try:
             self.client_address = writer.get_extra_info('peername')
             self.client_writer = writer
@@ -45,14 +69,15 @@ class TCPServer:
             self.logger.info("Client connection closed")
 
     def send_message(self, answer, address=None):
-        """Send a message back to the client
-        
+        """
+        Send a message back to the client.
+
         Args:
-            answer (bytes or str): The answer to send (can be text or binary data)
-            address: The client address (optional)
-            
+            answer (bytes or str): The answer to send (can be text or binary data).
+            address: The client address (optional).
+
         Returns:
-            bool: True if message was sent successfully
+            bool: True if message was sent successfully, False otherwise.
         """
         try:
             if self.client_writer and (address is None or address == self.client_address):
@@ -88,7 +113,9 @@ class TCPServer:
             return False
 
     async def start(self):
-        """Start the TCP server and listen for connections"""
+        """
+        Start the TCP server and listen for connections.
+        """
         self.server = await asyncio.start_server(
             self.handle_client,
             self.host,
@@ -102,14 +129,20 @@ class TCPServer:
             await self.server.serve_forever()
 
     async def stop(self):
-        """Stop the TCP server"""
+        """
+        Stop the TCP server.
+        """
         if self.server:
             self.server.close()
             await self.server.wait_closed()
             self.is_running = False
             self.logger.info("Server stopped")
 
+
 if __name__ == "__main__":
+    """
+    Entry point for running the TCPServer as a standalone script.
+    """
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG,

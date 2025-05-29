@@ -1,16 +1,42 @@
+"""
+TCP Audio Client
+----------------
+A Gradio-based client for sending questions to a TCP server and receiving audio responses.
+"""
+
 import asyncio
 import logging
 import tempfile
 import gradio as gr
 
+
 class TCPClient:
+    """
+    TCPClient handles sending questions to a TCP server and receiving audio responses.
+    """
     def __init__(self, host='localhost', port=8888, logger=None):
+        """
+        Initialize the TCPClient.
+
+        Args:
+            host (str): Server host address.
+            port (int): Server port.
+            logger (logging.Logger): Logger instance.
+        """
         self.host = host
         self.port = port
         self.logger = logger
 
     async def send_question(self, question):
-        """Send a question to the server and receive audio response"""
+        """
+        Send a question to the server and receive the audio response.
+
+        Args:
+            question (str): The question to send.
+
+        Returns:
+            str: Path to the received audio file, or None on error.
+        """
         try:
             # Connect to server
             reader, writer = await asyncio.open_connection(self.host, self.port)
@@ -54,6 +80,17 @@ class TCPClient:
             self.logger.info("Connection closed")
 
     async def send_message(self, message, host, port):
+        """
+        Send a message to the server and get the audio response.
+
+        Args:
+            message (str): The message to send.
+            host (str): Server host.
+            port (int): Server port.
+
+        Returns:
+            tuple: (status message, audio file path or None)
+        """
         try:
             # Update client connection details
             self.host = host
@@ -62,15 +99,19 @@ class TCPClient:
             # Send message and get audio response
             audio_file = await self.send_question(message)
             if audio_file:
-                return f"Message sent successfully! Playing audio response.", audio_file
+                return "Message sent successfully! Playing audio response.", audio_file
             else:
                 return "Error: Failed to get audio response", None
         except Exception as e:
             return f"Error: {str(e)}", None
 
     def create_ui(self):
-        """Create and return the Gradio interface"""
+        """
+        Create and return the Gradio interface for the client.
 
+        Returns:
+            gr.Blocks: The Gradio interface.
+        """
         # Create Gradio interface
         with gr.Blocks(title="TCP Audio Client") as interface:
             gr.Markdown("# TCP Audio Client")
@@ -110,7 +151,11 @@ class TCPClient:
 
         return interface
 
-if __name__ == "__main__":
+
+def main():
+    """
+    Entry point for running the TCP Audio Client UI.
+    """
     # Configure logging to file
     log_file = "client/logs/tcp_client.log"
     logging.basicConfig(
@@ -128,4 +173,8 @@ if __name__ == "__main__":
     # Create client and launch UI
     client = TCPClient(logger=logger)
     interface = client.create_ui()
-    interface.launch() 
+    interface.launch()
+
+
+if __name__ == "__main__":
+    main() 
