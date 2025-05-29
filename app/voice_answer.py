@@ -119,7 +119,7 @@ class VoiceAnswer:
         """
         self.agent_assistant=MultiModelAgent(system_prompt=system_prompt_assistant, 
                                              model_name=self.model_assistant, logger=self.logger, 
-                                             process_type="instruct", with_context=True)
+                                             process_type=ProcessType.INSTRUCT, with_context=True)
 
         self.tts_agent=TTSAgent(logger=self.logger)
 

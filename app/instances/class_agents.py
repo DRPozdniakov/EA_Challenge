@@ -86,7 +86,7 @@ class MultiModelAgent:
     
     async def assist_user(self, question: str, temperature: float = 0.5, max_tokens: int =500, top_p=0.7, seed: int = 69):
         
-        self.logger.debug(f"Model {self.model_role} asked: \n {question}")
+        self.logger.info(f"Model {self.model_role} asked: \n {question}")
 
         if self.model_type == AIModelType.CHATGPT or self.model_type == AIModelType.QWEN:
             
@@ -96,7 +96,6 @@ class MultiModelAgent:
                 else:
                     content = [system_message for system_message in self.system_prompt] + [self.message_maker("user", question)]
 
-        content=[self.message_maker("user", question)]
         result = self.client_model.chat.completions.create(
                     model=self.model_name,
                     messages=content,

@@ -3,6 +3,7 @@ import logging
 import pygame
 import tempfile
 import os
+import gradio as gr
 
 class TCPClient:
     def __init__(self, host='localhost', port=8888, logger=None):
@@ -44,28 +45,38 @@ class TCPClient:
             
             self.logger.info(f"Received complete audio data: {len(audio_data)} bytes")
             
-            # Play the audio
-            self.play_audio(audio_data)
+            # Save audio to temporary file and return its path
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+                temp_file.write(audio_data)
+                return temp_file.name
             
         except Exception as e:
             self.logger.error(f"Error in client: {str(e)}")
+            return None
         finally:
             writer.close()
             await writer.wait_closed()
             self.logger.info("Connection closed")
 
-    def play_audio(self, audio_data):
-        """Play received audio data"""
+    async def send_message(self, message, host, port):
         try:
-            # Create a temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-                temp_file.write(audio_data)
-                temp_file_path = temp_file.name
+            # Update client connection details
+            self.host = host
+            self.port = int(port)
             
-            self.logger.debug(f"Created temporary file: {temp_file_path}")
-            
-            # Load and play the audio using pygame
-            pygame.mixer.music.load(temp_file_path)
+            # Send message and get audio response
+            audio_file = await self.send_question(message)
+            if audio_file:
+                return f"Message sent successfully! Playing audio response.", audio_file
+            else:
+                return "Error: Failed to get audio response", None
+        except Exception as e:
+            return f"Error: {str(e)}", None
+
+    def play_audio(self, audio_file):
+        """Play audio file using pygame"""
+        try:
+            pygame.mixer.music.load(audio_file)
             pygame.mixer.music.play()
             
             # Wait for the audio to finish playing
@@ -75,7 +86,7 @@ class TCPClient:
             self.logger.info("Audio playback completed successfully")
             
             # Clean up the temporary file
-            os.unlink(temp_file_path)
+            os.unlink(audio_file)
             self.logger.debug("Temporary file cleaned up")
             
         except Exception as e:
@@ -84,19 +95,64 @@ class TCPClient:
             # Stop any playing audio
             pygame.mixer.music.stop()
 
-async def main():
-    # Configure logging
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    logger = logging.getLogger(__name__)
-    
-    # Create client and send question
-    client = TCPClient(logger=logger)
-    question = "How much is the fish?"
-    await client.send_question(question)
+    def create_ui(self):
+        """Create and return the Gradio interface"""
+
+        # Create Gradio interface
+        with gr.Blocks(title="TCP Audio Client") as interface:
+            gr.Markdown("# TCP Audio Client")
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    message_input = gr.Textbox(
+                        label="Message",
+                        placeholder="Enter your message here...",
+                        lines=3
+                    )
+                    with gr.Row():
+                        host_input = gr.Textbox(
+                            label="Server Host",
+                            value=self.host,
+                            placeholder="Enter server host (e.g., localhost)"
+                        )
+                        port_input = gr.Textbox(
+                            label="Server Port",
+                            value=str(self.port),
+                            placeholder="Enter server port"
+                        )
+                    send_button = gr.Button("Send Message")
+                with gr.Column(scale=1.0):
+                    status_output = gr.Textbox(label="Status", lines=1, scale=1)
+                    audio_output = gr.Audio(
+                        label="Response Audio",
+                        autoplay=True,
+                        scale=2
+                    )
+            
+            send_button.click(
+                fn=self.send_message,
+                inputs=[message_input, host_input, port_input],
+                outputs=[status_output, audio_output]
+            )
+
+        return interface
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    # Configure logging to file
+    log_file = "./app/logs/tcp_client.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()  # This will also show logs in console
+        ]
+    )
+    logger = logging.getLogger(__name__)
+    logger.info("Starting TCP Client...")
+    
+    # Create client and launch UI
+    client = TCPClient(logger=logger)
+    interface = client.create_ui()
+    interface.launch() 
