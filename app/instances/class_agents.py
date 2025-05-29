@@ -8,7 +8,11 @@ from enum import Enum
 
 
 logger = logging.getLogger(__name__)
-
+class ProcessType:
+    INSTRUCT="instruct"
+    TTS="tts"
+    IMGTOTEXT="img_to_text"
+    IMGTOIMG="img_to_img"
 class AIModelType(Enum):
     CHATGPT = "CHATGPT"
     QWEN = "QWEN"
@@ -23,9 +27,9 @@ class MultiModelAgent:
 
     history=[]
     
-    def __init__(self, system_prompt: str, model_name: str, model_role: str="assistant",
+    def __init__(self, model_name: str, system_prompt: str = None, model_role: str="assistant",
                  logger=None, functions=None, as_json:bool=False, 
-                 with_context:bool=False, with_data_url:bool=False, with_attachement:bool=False):
+                 with_context:bool=False, process_type:ProcessType=ProcessType.INSTRUCT, voice:str="alloy"):
 
         self.model_name=model_name
         self.system_prompt = [self.message_maker("system", system_prompt)]
@@ -34,11 +38,13 @@ class MultiModelAgent:
         self.logger=logger
         self.with_context=with_context
         self.as_json=as_json
+        self.process_type=process_type
+        self.voice=voice
 
         dotenv_path = ".env"
         load_dotenv(dotenv_path)
 
-        if "gpt" in model_name.lower():
+        if "gpt" or "tts" in model_name.lower():
             api_key = os.getenv('OPENAI_AI_KEY')
             self.client_model = OpenAI(api_key=api_key)
             self.model_type = AIModelType.CHATGPT
@@ -69,23 +75,11 @@ class MultiModelAgent:
         return {"role": role, "content": content}
     
     @staticmethod
-    def message_maker_with_attachement(role: str, content: str, attachments: list[dict]) -> dict:
+    def message_maker_tts(role: str, content: str, voice: str) -> dict:
         """
         Create a message dictionary for the model.
         """
-        return {"role": role, "content": content, "attachments" : [
-            {"filename" : attach["filename"], "data": attach["data"]} for attach in attachments
-        ]}
-    
-    @staticmethod
-    def message_maker_with_data_url(role: str, content: str, attachments: list[dict]) -> dict:
-        """
-        Create a message dictionary for the model.
-        """
-        return {"role": role, "content": [
-            {"type": "text", "text": content},
-            {"type": "image_url", "image_url": {"url": f"{attachments[0]['data']}"}}
-            ]}
+        return {"role": role, "input": content, "voice": voice}
 
     def add_system_prompt(self,system_prompt:str):
         self.system_prompt.append(self.message_maker("system", system_prompt))
@@ -95,43 +89,31 @@ class MultiModelAgent:
         self.logger.debug(f"Model {self.model_role} asked: \n {question}")
 
         if self.model_type == AIModelType.CHATGPT or self.model_type == AIModelType.QWEN:
+            
+            if self.process_type == ProcessType.INSTRUCT:
+                if self.with_context:
+                    content = [system_message for system_message in self.system_prompt]  + self.history + [{"role":"user","content":question}]
+                else:
+                    content = [system_message for system_message in self.system_prompt] + [self.message_maker("user", question)]
 
-            if self.with_context:
-                content = [system_message for system_message in self.system_prompt]  + self.history + [{"role":"user","content":question}]
-            else:
-                content = [system_message for system_message in self.system_prompt] + [self.message_maker("user", question)]
+        content=[self.message_maker("user", question)]
+        result = self.client_model.chat.completions.create(
+                    model=self.model_name,
+                    messages=content,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                    seed=seed
+                    )
+        answer=result.choices[0].message.content
 
-            result = self.client_model.chat.completions.create(
-            model=self.model_name,
-            messages=content,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            seed=seed
-            )
-
-            answer=result.choices[0].message.content
-
-        elif self.model_type == AIModelType.CLAUDE:
-            system_prompt_combined = "\n\n".join([prompt["content"] for prompt in self.system_prompt]) 
-
-            content=[self.message_maker("user", question)]
-            result = self.client_model.messages.create(
-                model=self.model_name,
-                system=system_prompt_combined,
-                messages=content,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            answer=result.content[0].text
-        
+        # Storing conversation history to keep context of conversation
         if self.with_context:
             self.history = self.history + [
                                     {"role": "user",      "content": question},
                                     {"role": "assistant", "content": answer}
                                 ]
             
-
         logger.debug(f"Model {self.model_role} answered: \n {answer}")
 
         return [{"role": f"{self.model_role}"},{"content" : answer}]
