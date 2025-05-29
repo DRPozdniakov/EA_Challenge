@@ -4,7 +4,7 @@ agent_tss.py
 TTSAgent for converting text to speech using LLM APIs.
 """
 
-from app.instances.class_agents import MultiModelAgent, ProcessType
+from app.agents.class_agents import MultiModelAgent, ProcessType
 
 class TTSAgent:
     """

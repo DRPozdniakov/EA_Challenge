@@ -32,11 +32,13 @@ class WebSocketClient:
         uri = f"ws://{self.host}:{self.port}"
         try:
             async with websockets.connect(uri, max_size=None) as websocket:
+                # 1. Receive the text from the UI and sends it to the server
                 await websocket.send(question)
                 self.logger.info(f"Sent question: {question}")
+                # 2. Receive the audio from the server
                 audio_data = await websocket.recv()  # Should be bytes
                 self.logger.info(f"Received audio data: {len(audio_data)} bytes")
-                # Save audio to temporary file and return its path
+                # 3. Receives the audio data and provides for it for playing in the UI.
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
                     temp_file.write(audio_data)
                     return temp_file.name

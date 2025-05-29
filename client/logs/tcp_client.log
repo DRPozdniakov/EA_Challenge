@@ -43,3 +43,54 @@
 2025-05-29 13:24:25 - INFO - Sent question: What is your name?
 2025-05-29 13:24:30 - INFO - Received complete audio data: 41088 bytes
 2025-05-29 13:24:30 - INFO - Connection closed
+2025-05-29 14:39:55 - INFO - Starting WebSocket Client...
+2025-05-29 14:39:55 - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2025-05-29 14:39:56 - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2025-05-29 14:39:56 - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2025-05-29 14:40:13 - INFO - Sent question: Hi Lora
+2025-05-29 14:40:16 - INFO - Received audio data: 33024 bytes
+2025-05-29 14:40:25 - INFO - Sent question: What is your name?
+2025-05-29 14:40:29 - INFO - Received audio data: 101760 bytes
+2025-05-29 14:40:43 - INFO - Sent question: How much is the fish?
+
+2025-05-29 14:40:56 - INFO - Received audio data: 797568 bytes
+2025-05-29 14:55:03 - INFO - Starting WebSocket Client...
+2025-05-29 14:55:04 - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2025-05-29 14:55:04 - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2025-05-29 14:55:04 - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2025-05-29 14:55:19 - INFO - Sent question: Your name is Lidia
+
+2025-05-29 14:55:22 - INFO - Received audio data: 60288 bytes
+2025-05-29 14:55:39 - INFO - Sent question: Your name is Sindy Pozdniakova
+
+2025-05-29 14:55:43 - INFO - Received audio data: 179328 bytes
+2025-05-29 14:56:00 - INFO - Sent question: What is your name?
+
+2025-05-29 14:56:03 - INFO - Received audio data: 42624 bytes
+2025-05-29 14:56:47 - INFO - Starting WebSocket Client...
+2025-05-29 14:56:47 - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2025-05-29 14:56:47 - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2025-05-29 14:56:48 - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2025-05-29 14:56:49 - INFO - Sent question: Your name is Sindy Pozdniakova
+2025-05-29 14:56:52 - INFO - Received audio data: 87168 bytes
+2025-05-29 14:57:11 - INFO - Sent question: What is your name? And how much is the fish?
+
+2025-05-29 14:57:21 - INFO - Received audio data: 573696 bytes
+2025-05-29 14:58:34 - INFO - Sent question: Your name i Valeria Pozdniakova and you are 4 years 9 month old
+
+
+2025-05-29 14:58:41 - INFO - Received audio data: 447360 bytes
+2025-05-29 14:59:21 - INFO - Sent question: Tell me about yourself?
+
+
+2025-05-29 14:59:32 - INFO - Received audio data: 766464 bytes
+2025-05-29 15:00:56 - INFO - Starting WebSocket Client...
+2025-05-29 15:00:57 - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2025-05-29 15:00:57 - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2025-05-29 15:00:57 - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2025-05-29 15:01:05 - INFO - Sent question: TOday is May 2045
+
+2025-05-29 15:01:10 - INFO - Received audio data: 332160 bytes
+2025-05-29 15:01:47 - INFO - Sent question: What is the date today?
+
+2025-05-29 15:01:51 - INFO - Received audio data: 227328 bytes
