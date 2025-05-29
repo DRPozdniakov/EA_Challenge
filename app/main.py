@@ -1,4 +1,4 @@
-from app.service.voice_answer import VoiceAnswerService
+from app.services.service_voice_answer import VoiceAnswerService
 import logging
 import asyncio
 
