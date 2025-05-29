@@ -3,7 +3,6 @@ from openai import OpenAI
 import os
 import logging
 from dotenv import load_dotenv
-import anthropic
 from enum import Enum
 
 
@@ -49,10 +48,6 @@ class MultiModelAgent:
             self.client_model = OpenAI(api_key=api_key)
             self.model_type = AIModelType.CHATGPT
 
-        elif "claude" in model_name.lower():
-            anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
-            self.client_model  = anthropic.Anthropic(api_key=anthropic_api_key)
-            self.model_type = AIModelType.CLAUDE
         
         elif "qwen" in model_name.lower():
             api_key = os.getenv('QWEN_AI_KEY')

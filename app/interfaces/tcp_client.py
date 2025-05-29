@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import pygame
 import tempfile
-import os
 import gradio as gr
 
 class TCPClient:
@@ -10,9 +8,6 @@ class TCPClient:
         self.host = host
         self.port = port
         self.logger = logger
-        # Initialize pygame mixer
-        pygame.mixer.init()
-        self.logger.debug("Pygame mixer initialized")
 
     async def send_question(self, question):
         """Send a question to the server and receive audio response"""
@@ -73,28 +68,6 @@ class TCPClient:
         except Exception as e:
             return f"Error: {str(e)}", None
 
-    def play_audio(self, audio_file):
-        """Play audio file using pygame"""
-        try:
-            pygame.mixer.music.load(audio_file)
-            pygame.mixer.music.play()
-            
-            # Wait for the audio to finish playing
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
-            
-            self.logger.info("Audio playback completed successfully")
-            
-            # Clean up the temporary file
-            os.unlink(audio_file)
-            self.logger.debug("Temporary file cleaned up")
-            
-        except Exception as e:
-            self.logger.error(f"Error playing audio: {str(e)}")
-        finally:
-            # Stop any playing audio
-            pygame.mixer.music.stop()
-
     def create_ui(self):
         """Create and return the Gradio interface"""
 
@@ -139,7 +112,7 @@ class TCPClient:
 
 if __name__ == "__main__":
     # Configure logging to file
-    log_file = "./app/logs/tcp_client.log"
+    log_file = "logs/tcp_client.log"
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',

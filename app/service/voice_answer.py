@@ -4,11 +4,9 @@ import io
 import tempfile
 import pygame
 import asyncio
-from openai import OpenAI
-from dotenv import load_dotenv
 
-from instances.class_agents import MultiModelAgent, ProcessType
-from interfaces.tcp_server import TCPServer    
+from app.instances.class_agents import MultiModelAgent, ProcessType
+from app.interfaces.tcp_server import TCPServer    
 
 # Configure logging
 logging.basicConfig(
