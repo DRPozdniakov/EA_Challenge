@@ -4,6 +4,8 @@ voice_answer.py
 Main service for handling voice-based answers using LLM and TTS.
 """
 import logging
+from typing import Optional, Dict, Any, List, Union
+from websockets.server import ServerProtocol
 
 from app.interfaces.websocket_server import WebSocketServer
 from app.agents.class_agents import MultiModelAgent, ProcessType
@@ -17,7 +19,7 @@ class VoiceAnswerService:
             any kind of question with versatile literature erudition and light futuristic touch.
             """
             )
-    def __init__(self, logger=None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or logging.getLogger(__name__)
         self.model_assistant = "gpt-4.1"
 
@@ -32,11 +34,11 @@ class VoiceAnswerService:
         self.server = WebSocketServer(
             host='0.0.0.0',
             port=8888,
-            logger=self.logger,
-            handler=self.handle_message
+            message_handler=self.handle_message
         )
 
-    async def handle_message(self, websocket, message):
+    async def handle_message(self, websocket: ServerProtocol, message: str) -> None:
+        
         # 1. Receiving the message from the socket
         self.logger.info(f"Received message: {message}")
         # 2. Get answer from LLM in the text format
@@ -44,8 +46,11 @@ class VoiceAnswerService:
         # 3. Convert answer to audio on the external service
         audio_data = await self.tts_agent.transform_text_to_speech(answer[1]["content"])
         # 4. Send audio back to the client
-        await websocket.send(audio_data)
-        self.logger.info("Audio data sent to client.")
+        if audio_data:
+            await websocket.send(audio_data)
+            self.logger.info("Audio data sent to client.")
+        else:
+            self.logger.error("Failed to generate audio data")
 
-    async def run(self):
+    async def run(self) -> None:
         await self.server.start()

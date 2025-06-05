@@ -15,28 +15,27 @@ import psutil
 import logging
 import json
 import pytest
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Union, Tuple
 from websockets.exceptions import WebSocketException
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-RESPONSE_TIME_THRESHOLD = 10.0
-MEMORY_USAGE_THRESHOLD = 500
-
 # Constants
-CONNECTION_TIMEOUT = 10  # seconds
-REQUEST_TIMEOUT = 30     # seconds
-MAX_RETRIES = 3         # maximum number of retries for failed requests
+CONNECTION_TIMEOUT: int = 10  # seconds
+REQUEST_TIMEOUT: int = 30     # seconds
+MAX_RETRIES: int = 3         # maximum number of retries for failed requests
+RESPONSE_TIME_THRESHOLD: float = 10.0  # seconds
+MEMORY_USAGE_THRESHOLD: int = 500  # MB
 
 class RequestResult:
     """Class to store request results and status."""
-    def __init__(self, question: str, response_time: float = 0, error: Optional[str] = None):
-        self.question = question
-        self.response_time = response_time
-        self.error = error
-        self.success = error is None
+    def __init__(self, question: str, response_time: float = 0.0, error: Optional[str] = None) -> None:
+        self.question: str = question
+        self.response_time: float = response_time
+        self.error: Optional[str] = error
+        self.success: bool = error is None
 
 @pytest.mark.asyncio
 async def test_single_request():
@@ -121,17 +120,17 @@ async def test_multiple_requests():
 async def make_request(uri: str, question: str, retry_count: int = 0) -> RequestResult:
     """Helper function to make a single request with timeout and retry logic."""
     try:
-        start_time = time.time()
+        start_time: float = time.time()
         async with websockets.connect(uri, close_timeout=CONNECTION_TIMEOUT) as websocket:
             # Set a timeout for the entire request
             async with asyncio.timeout(REQUEST_TIMEOUT):
                 await websocket.send(json.dumps({"question": question}))
-                response = await websocket.recv()
-                end_time = time.time()
+                response: str = await websocket.recv()
+                end_time: float = time.time()
                 return RequestResult(question, end_time - start_time)
                 
     except asyncio.TimeoutError:
-        error_msg = f"Request timed out after {REQUEST_TIMEOUT} seconds"
+        error_msg: str = f"Request timed out after {REQUEST_TIMEOUT} seconds"
         logger.error(f"Timeout for question '{question}': {error_msg}")
         if retry_count < MAX_RETRIES:
             logger.info(f"Retrying request for '{question}' (attempt {retry_count + 1}/{MAX_RETRIES})")
@@ -139,7 +138,7 @@ async def make_request(uri: str, question: str, retry_count: int = 0) -> Request
         return RequestResult(question, error=error_msg)
         
     except WebSocketException as e:
-        error_msg = f"WebSocket error: {str(e)}"
+        error_msg: str = f"WebSocket error: {str(e)}"
         logger.error(f"WebSocket error for question '{question}': {error_msg}")
         if retry_count < MAX_RETRIES:
             logger.info(f"Retrying request for '{question}' (attempt {retry_count + 1}/{MAX_RETRIES})")
@@ -147,15 +146,15 @@ async def make_request(uri: str, question: str, retry_count: int = 0) -> Request
         return RequestResult(question, error=error_msg)
         
     except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
+        error_msg: str = f"Unexpected error: {str(e)}"
         logger.error(f"Error for question '{question}': {error_msg}")
         return RequestResult(question, error=error_msg)
 
 @pytest.mark.asyncio
-async def test_concurrent_requests():
+async def test_concurrent_requests() -> None:
     """Test multiple concurrent requests to check simultaneous handling."""
-    uri = "ws://localhost:8888"
-    questions = [
+    uri: str = "ws://localhost:8888"
+    questions: List[str] = [
         "What is the date today",
         "Your name is Lora",
         "What time is it?",
@@ -164,25 +163,25 @@ async def test_concurrent_requests():
     ]
     
     # Start all requests concurrently
-    start_time = time.time()
-    tasks = [make_request(uri, question) for question in questions]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    total_time = time.time() - start_time
+    start_time: float = time.time()
+    tasks: List[asyncio.Task[RequestResult]] = [make_request(uri, question) for question in questions]
+    results: List[Union[RequestResult, Exception]] = await asyncio.gather(*tasks, return_exceptions=True)
+    total_time: float = time.time() - start_time
     
     # Process results
-    successful_requests = [r for r in results if isinstance(r, RequestResult) and r.success]
-    failed_requests = [r for r in results if isinstance(r, RequestResult) and not r.success]
+    successful_requests: List[RequestResult] = [r for r in results if isinstance(r, RequestResult) and r.success]
+    failed_requests: List[RequestResult] = [r for r in results if isinstance(r, RequestResult) and not r.success]
     
     if successful_requests:
-        response_times = [r.response_time for r in successful_requests]
-        max_time = max(response_times)
-        avg_time = sum(response_times) / len(response_times)
+        response_times: List[float] = [r.response_time for r in successful_requests]
+        max_time: float = max(response_times)
+        avg_time: float = sum(response_times) / len(response_times)
     else:
-        max_time = avg_time = 0
+        max_time = avg_time = 0.0
     
     # Get peak memory usage
-    process = psutil.Process()
-    memory_usage = process.memory_info().rss / 1024 / 1024
+    process: psutil.Process = psutil.Process()
+    memory_usage: float = process.memory_info().rss / 1024 / 1024  # Convert to MB
     
     # Print detailed results
     print("\nConcurrent Requests Results:")
@@ -223,7 +222,7 @@ async def test_concurrent_requests():
 
 # Keep the main block for direct script execution
 if __name__ == "__main__":
-    async def main():
+    async def main() -> None:
         print("Running single request test...")
         await test_single_request()
         

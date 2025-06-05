@@ -3,3 +3,5 @@ app/logs/*
 app/_pycache_/*
 client/logs/*
 app/service/__pycache__/*
+mypy-result.txt
+mypy-report.txt
